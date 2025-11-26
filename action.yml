@@ -18,6 +18,14 @@ inputs:
     description: "OpenAI API key used by Codex."
     required: false
     default: ""
+  codex-auth-config:
+    description: "Codex auth.json config content. Should be provided if `openai-api-key` is not set."
+    required: false
+    default: ""
+  codex-config:
+    description: "Codex config contents to write to codex.toml"
+    required: false
+    default: ""
   responses-api-endpoint:
     description: "Optional Responses API endpoint override, e.g. https://example.openai.azure.com/openai/v1/responses. Defaults to the proxy's built-in endpoint when empty."
     required: false
@@ -236,6 +244,22 @@ runs:
           --codex-home "${{ steps.resolve_home.outputs.codex-home }}" \
           --port "${{ steps.read_server_info.outputs.port }}" \
           --safety-strategy "${{ inputs['safety-strategy'] }}"
+
+    - name: Write Codex auth config
+      if: ${{ inputs['codex-auth-config'] != '' }}
+      shell: bash
+      env:
+        CODEX_AUTH_CONFIG: ${{ inputs['codex-auth-config'] }}
+      run: |
+        echo "$CODEX_AUTH_CONFIG" > ${{ steps.resolve_home.outputs.codex-home }}/auth.json
+
+    - name: Write Codex config
+      if: ${{ inputs['codex-config'] != '' }}
+      shell: bash
+      env:
+        CODEX_CONFIG: ${{ inputs['codex-config'] }}
+      run: |
+        echo "$CODEX_CONFIG" >> ${{ steps.resolve_home.outputs.codex-home }}/config.toml
 
     - name: Drop sudo privilege, if appropriate
       if: ${{ inputs['safety-strategy'] == 'drop-sudo' }}
