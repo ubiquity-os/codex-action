@@ -111,6 +111,10 @@ inputs:
   auth-token:
     description: "GitHub token used for authentication when posting comments."
     required: true
+  post-comment:
+    description: "Whether to post a comment with the Codex output."
+    required: false
+    default: "true"
 outputs:
   final-message:
     description: "Raw output emitted by `codex exec`."
@@ -306,7 +310,7 @@ runs:
 
     - name: Post thinking comment
       id: post_thinking_comment
-      if: ${{ inputs.prompt != '' || inputs['prompt-file'] != '' }}
+      if: ${{ inputs['post-comment'] == 'true' && (inputs.prompt != '' || inputs['prompt-file'] != '') }}
       shell: bash
       env:
         GITHUB_TOKEN: ${{ inputs['auth-token'] }}
@@ -353,7 +357,7 @@ runs:
             --codex-user "$CODEX_USER"
 
     - name: Post final comment
-      if: ${{ steps.run_codex.outcome == 'success' }}
+      if: ${{ inputs['post-comment'] == 'true' && steps.run_codex.outcome == 'success' }}
       shell: bash
       env:
         GITHUB_TOKEN: ${{ inputs['auth-token'] }}
@@ -367,7 +371,7 @@ runs:
           --hide-job-url true
       
     - name: Post error comment
-      if: ${{ steps.run_codex.outcome == 'failure' }}
+      if: ${{ inputs['post-comment'] == 'true' && steps.run_codex.outcome == 'failure' }}
       shell: bash
       env:
         GITHUB_TOKEN: ${{ inputs['auth-token'] }}
